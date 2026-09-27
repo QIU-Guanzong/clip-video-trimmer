@@ -97,8 +97,7 @@ class TrimmingProof(unittest.TestCase):
                     "platform": platform.platform(),
                     "ffmpeg": run("ffmpeg", "-version").splitlines()[0],
                     "cases": cls.results,
-                    "windows_installer_verified": False,
-                    "large_files_verified": False,
+                    "scope": "Small synthetic FFmpeg fixture only; separate reports cover installer and large files",
                 },
                 indent=2,
             )

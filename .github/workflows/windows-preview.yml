@@ -42,7 +42,7 @@ jobs:
           if (!$App.WaitForExit(10000)) { $App.Kill(); throw 'Packaged app did not exit after close' }
           $Uninstall = Start-Process "$InstallDir/unins000.exe" -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -PassThru -Wait
           if ($Uninstall.ExitCode -ne 0 -or (Test-Path "$InstallDir/Clip.exe")) { throw 'Uninstall failed' }
-          @{head=$env:GITHUB_SHA; platform='windows-2022'; windowTitle=$Title; install=$true; launch=$true; uninstall=$true; limitation='Automated runner only; large-file and human desktop acceptance pending'} | ConvertTo-Json | Set-Content windows-install-verification.json
+          @{head=$env:GITHUB_SHA; platform='windows-2022'; windowTitle=$Title; install=$true; launch=$true; uninstall=$true; limitation='Automated runner only; human desktop and perceptual audio-sync acceptance pending'} | ConvertTo-Json | Set-Content windows-install-verification.json
       - name: Save internal preview without Actions artifact storage
         env:
           GH_TOKEN: ${{ github.token }}
