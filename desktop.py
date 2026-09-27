@@ -9,6 +9,8 @@ import shutil
 import sys
 import tempfile
 
+from keyframes import snap_interval
+
 from PySide6.QtCore import QProcess, Qt, QUrl
 from PySide6.QtGui import QAction
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -133,6 +135,9 @@ class ClipWindow(QMainWindow):
             times.addWidget(QLabel(label))
             times.addWidget(spin, 1)
             spin.valueChanged.connect(self.update_controls)
+        self.align_button = QPushButton("Align to keyframes")
+        self.align_button.clicked.connect(self.align_keyframes)
+        times.addWidget(self.align_button)
         layout.addLayout(times)
         self.note = QLabel(
             "Lossless stream copy keeps encoded quality. Cut boundaries can shift to nearby frames; exact-frame export is not included."
@@ -185,6 +190,9 @@ class ClipWindow(QMainWindow):
             loaded and not self.busy and self.start.value() < self.end.value()
         )
         self.cancel_button.setEnabled(self.busy)
+        self.align_button.setEnabled(
+            loaded and not self.busy and self.start.value() < self.end.value()
+        )
 
     def choose_source(self):
         if self.busy:
@@ -233,7 +241,7 @@ class ClipWindow(QMainWindow):
         self.errors.clear()
         self.progress_buffer = ""
         self.busy = True
-        self.progress.setRange(0, 0 if phase == "probe" else 100)
+        self.progress.setRange(0, 0 if phase in ("probe", "keyframes") else 100)
         self.progress.setValue(0)
         self.update_controls()
         self.process.start(executable, args)
@@ -300,6 +308,20 @@ class ClipWindow(QMainWindow):
                     f"{video['width']} × {video['height']} · {video['codec_name']} · Set your in and out points."
                 )
                 self.progress.setValue(0)
+            elif phase == "keyframes":
+                data = json.loads(self.raw)
+                start, end = snap_interval(
+                    data.get("frames", []),
+                    *self.align_request,
+                    self.duration,
+                    self.timestamp_offset,
+                )
+                self.start.setValue(start)
+                self.end.setValue(end)
+                self.status.setText(
+                    f"Aligned to {start:.3f}s – {end:.3f}s. Review this range before exporting; muxed duration may vary slightly."
+                )
+                self.progress.setValue(0)
             elif phase == "export":
                 # Probe the finished output asynchronously before publishing it.
                 self.begin(
@@ -347,6 +369,36 @@ class ClipWindow(QMainWindow):
                 self.scratch.cleanup()
                 self.scratch = None
             self.update_controls()
+
+    def align_keyframes(self):
+        if self.busy or not self.source:
+            return
+        self.align_request = (self.start.value(), self.end.value())
+        self.timestamp_offset = float(self.metadata["format"].get("start_time", 0))
+        intervals = ",".join(
+            f"{time + self.timestamp_offset:.6f}%+30" for time in self.align_request
+        )
+        self.begin(
+            "keyframes",
+            tool("ffprobe"),
+            [
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-skip_frame",
+                "nokey",
+                "-read_intervals",
+                intervals,
+                "-show_frames",
+                "-show_entries",
+                "frame=best_effort_timestamp_time",
+                "-of",
+                "json",
+                str(self.source),
+            ],
+        )
+        self.status.setText("Finding nearby keyframes… You can cancel this scan.")
 
     def choose_export(self):
         if self.busy or not self.source:

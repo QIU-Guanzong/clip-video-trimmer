@@ -114,6 +114,16 @@ class DesktopTests(unittest.TestCase):
         app.processEvents()
         self.window.grab().save(str(shots / "compact-export.png"))
 
+    def test_aligns_to_real_keyframes(self):
+        self.load()
+        self.window.start.setValue(2.36)
+        self.window.end.setValue(4.36)
+        QTest.mouseClick(self.window.align_button, Qt.MouseButton.LeftButton)
+        until(lambda: not self.window.busy)
+        self.assertEqual(self.window.start.value(), 2)
+        self.assertEqual(self.window.end.value(), 6)
+        self.assertIn("Review this range", self.window.status.text())
+
     def test_cancel_leaves_no_output(self):
         self.load()
         destination = self.root / "cancelled.mp4"

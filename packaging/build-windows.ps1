@@ -14,8 +14,12 @@ python -m pip install -r requirements-build.txt
 if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed.' }
 python verify.py
 if ($LASTEXITCODE -ne 0) { throw 'FFmpeg verification failed.' }
+python test_keyframes.py
+if ($LASTEXITCODE -ne 0) { throw 'Keyframe verification failed.' }
 python test_desktop.py
 if ($LASTEXITCODE -ne 0) { throw 'Desktop verification failed.' }
+python verify_large_file.py
+if ($LASTEXITCODE -ne 0) { throw 'Large-file verification failed.' }
 python -m PyInstaller --clean --noconfirm --windowed --onedir --name Clip desktop.py
 if ($LASTEXITCODE -ne 0) { throw 'Application build failed.' }
 Copy-Item -Recurse tools dist/Clip/tools

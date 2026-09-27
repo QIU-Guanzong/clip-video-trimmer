@@ -22,7 +22,9 @@ def main():
             archive.open("wb") as output,
         ):
             shutil.copyfileobj(source, output)
-        if hashlib.file_digest(archive.open("rb"), "sha256").hexdigest() != SHA256:
+        with archive.open("rb") as downloaded:
+            actual_digest = hashlib.file_digest(downloaded, "sha256").hexdigest()
+        if actual_digest != SHA256:
             raise SystemExit("FFmpeg archive checksum does not match")
         target.mkdir()
         with zipfile.ZipFile(archive) as bundle:

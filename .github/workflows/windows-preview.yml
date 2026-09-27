@@ -53,8 +53,8 @@ jobs:
           $Body = @"
           Internal Windows preview for source $env:GITHUB_SHA.
           Automated FFmpeg tests, native Qt tests, installer creation and install/launch/uninstall smoke completed in this run.
-          Human Windows acceptance, large-file checks, precise keyframe preview and complete third-party source distribution review remain outstanding. Unsigned internal draft; not a completed client delivery.
+          Human Windows acceptance, perceptual audio sync on representative customer-approved media and complete third-party source distribution review remain outstanding. Keyframe alignment and synthetic large-file checks are included. Unsigned internal draft; not a completed client delivery.
           "@
           $Body | Set-Content preview-notes.md
-          gh release create $Tag dist/installer/Clip-Setup-0.1.0.exe verification.json windows-install-verification.json screenshots/desktop-export.png screenshots/compact-export.png --draft --target $env:GITHUB_SHA --title 'Clip Windows internal preview' --notes-file preview-notes.md
+          gh release create $Tag dist/installer/Clip-Setup-0.1.0.exe verification.json large-file-verification.json windows-install-verification.json screenshots/desktop-export.png screenshots/compact-export.png --draft --target $env:GITHUB_SHA --title 'Clip Windows internal preview' --notes-file preview-notes.md
           if ($LASTEXITCODE -ne 0) { throw 'Draft upload failed' }
