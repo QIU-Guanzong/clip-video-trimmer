@@ -1,0 +1,10 @@
+runtime/
+.venv/
+__pycache__/
+.ruff_cache/
+build/
+dist/
+*.spec
+tools/
+review/
+*.log

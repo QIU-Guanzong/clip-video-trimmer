@@ -1,0 +1,28 @@
+{
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "ffmpeg": "ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers",
+  "cases": [
+    {
+      "start": 2.36,
+      "end": 4.36,
+      "video_frames": 52,
+      "output_duration": "2.080000",
+      "video_frames_unchanged": true,
+      "audio_packets_unchanged": true,
+      "start_delta_seconds": 0.0,
+      "end_delta_seconds": 0.06666700000000025
+    },
+    {
+      "start": 2,
+      "end": 4,
+      "video_frames": 52,
+      "output_duration": "2.080000",
+      "video_frames_unchanged": true,
+      "audio_packets_unchanged": true,
+      "start_delta_seconds": 0.0,
+      "end_delta_seconds": 0.06933299999999987
+    }
+  ],
+  "windows_installer_verified": false,
+  "large_files_verified": false
+}
