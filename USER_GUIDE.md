@@ -11,6 +11,8 @@ An unsigned internal Windows preview has passed automated install, launch and un
 
 Export copies the compressed video and audio rather than encoding again. This preserves encoded quality but can include frames around the requested boundaries. It is not an exact-frame cut mode. The first video stream and all audio streams are selected; subtitles and additional video streams are not included. Review the exported clip before using it.
 
+On Windows, saving the completed export uses a same-volume rename that refuses an existing filename. It does not require hard links, which FAT32 and exFAT do not support. FAT32's file-size limit still applies; use a suitable destination for larger exports. Removable-drive and representative-media acceptance remain separate from the automated checks.
+
 ## Setup from source
 
 Install Python 3.10 or later, then install the pinned dependency in `requirements.txt` and run `python desktop.py`. Install FFmpeg and ffprobe from a trusted build linked by https://ffmpeg.org/download.html. Both commands must be on PATH, or in a `tools` folder beside `desktop.py`. On Windows their names are `ffmpeg.exe` and `ffprobe.exe`.

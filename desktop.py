@@ -44,6 +44,11 @@ def tool(name):
 
 def publish_clip(temporary, destination):
     """Create the destination without replacing a file created during export."""
+    if sys.platform == "win32":
+        # Windows rename refuses an existing destination and works without
+        # hard-link support. The scratch directory is on the destination volume.
+        os.rename(temporary, destination)
+        return
     os.link(temporary, destination)
     Path(temporary).unlink()
 

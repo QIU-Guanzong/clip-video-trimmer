@@ -18,6 +18,8 @@ python test_keyframes.py
 if ($LASTEXITCODE -ne 0) { throw 'Keyframe verification failed.' }
 python test_desktop.py
 if ($LASTEXITCODE -ne 0) { throw 'Desktop verification failed.' }
+python test_publication.py
+if ($LASTEXITCODE -ne 0) { throw 'Non-overwriting file publication verification failed.' }
 python verify_large_file.py
 if ($LASTEXITCODE -ne 0) { throw 'Large-file verification failed.' }
 python -m PyInstaller --clean --noconfirm --windowed --onedir --name Clip desktop.py
