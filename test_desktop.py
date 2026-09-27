@@ -8,7 +8,7 @@ import time
 import unittest
 from unittest.mock import patch
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
@@ -78,6 +78,7 @@ class DesktopTests(unittest.TestCase):
             until(lambda: not self.window.busy)
         self.window.close()
         self.window.deleteLater()
+        app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         app.processEvents()
 
     def load(self):

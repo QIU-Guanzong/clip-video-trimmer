@@ -1,0 +1,60 @@
+name: Windows preview
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Prepare checksum-verified FFmpeg
+        run: python packaging/prepare-ffmpeg.py
+      - name: Test and build installer
+        run: ./packaging/build-windows.ps1
+      - name: Install and launch packaged application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Installer = Resolve-Path dist/installer/Clip-Setup-0.1.0.exe
+          $InstallDir = Join-Path $env:RUNNER_TEMP 'ClipInstalled'
+          $Install = Start-Process $Installer -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$InstallDir") -PassThru -Wait
+          if ($Install.ExitCode -ne 0) { throw 'Installer failed' }
+          & "$InstallDir/tools/ffmpeg.exe" -version
+          if ($LASTEXITCODE -ne 0) { throw 'Bundled FFmpeg failed' }
+          & "$InstallDir/tools/ffprobe.exe" -version
+          if ($LASTEXITCODE -ne 0) { throw 'Bundled ffprobe failed' }
+          & "$InstallDir/tools/ffmpeg.exe" -v error -f lavfi -i 'testsrc2=size=640x360:rate=25:duration=10' -c:v libx264 -y "$env:RUNNER_TEMP/synthetic.mp4"
+          if ($LASTEXITCODE -ne 0) { throw 'Fixture generation failed' }
+          $App = Start-Process "$InstallDir/Clip.exe" -ArgumentList "$env:RUNNER_TEMP/synthetic.mp4" -PassThru
+          Start-Sleep -Seconds 8
+          $App.Refresh()
+          if ($App.HasExited) { throw "Packaged app exited early: $($App.ExitCode)" }
+          if ($App.MainWindowHandle -eq 0) { throw 'Packaged app did not create a main window' }
+          $Title = $App.MainWindowTitle
+          if (!$App.CloseMainWindow()) { throw 'Could not close packaged app window' }
+          if (!$App.WaitForExit(10000)) { $App.Kill(); throw 'Packaged app did not exit after close' }
+          $Uninstall = Start-Process "$InstallDir/unins000.exe" -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -PassThru -Wait
+          if ($Uninstall.ExitCode -ne 0 -or (Test-Path "$InstallDir/Clip.exe")) { throw 'Uninstall failed' }
+          @{head=$env:GITHUB_SHA; platform='windows-2022'; windowTitle=$Title; install=$true; launch=$true; uninstall=$true; limitation='Automated runner only; large-file and human desktop acceptance pending'} | ConvertTo-Json | Set-Content windows-install-verification.json
+      - name: Save internal preview without Actions artifact storage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Tag = "windows-preview-$env:GITHUB_RUN_ID"
+          $Body = @"
+          Internal Windows preview for source $env:GITHUB_SHA.
+          Automated FFmpeg tests, native Qt tests, installer creation and install/launch/uninstall smoke completed in this run.
+          Human Windows acceptance, large-file checks, precise keyframe preview and complete third-party source distribution review remain outstanding. Unsigned internal draft; not a completed client delivery.
+          "@
+          $Body | Set-Content preview-notes.md
+          gh release create $Tag dist/installer/Clip-Setup-0.1.0.exe verification.json windows-install-verification.json screenshots/desktop-export.png screenshots/compact-export.png --draft --target $env:GITHUB_SHA --title 'Clip Windows internal preview' --notes-file preview-notes.md
+          if ($LASTEXITCODE -ne 0) { throw 'Draft upload failed' }

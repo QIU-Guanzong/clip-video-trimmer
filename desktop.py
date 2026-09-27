@@ -466,6 +466,7 @@ class ClipWindow(QMainWindow):
             self.cancel()
             self.process.waitForFinished(3000)
         self.player.stop()
+        self.player.setSource(QUrl())
         if self.scratch:
             self.scratch.cleanup()
         event.accept()
